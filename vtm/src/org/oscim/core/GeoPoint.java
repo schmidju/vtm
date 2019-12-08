@@ -93,6 +93,16 @@ public class GeoPoint implements Comparable<GeoPoint>, Serializable {
         this(latitudeE6 / CONVERSION_FACTOR, longitudeE6 / CONVERSION_FACTOR);
     }
 
+    /**
+     * @param latitudeE6  the latitude in microdegrees (degrees * 10^6), will be limited
+     *                    to the possible latitude range.
+     * @param longitudeE6 the longitude in microdegrees (degrees * 10^6), will be
+     *                    limited to the possible longitude range.
+     */
+    public GeoPoint(int latitudeE6, int longitudeE6, double conversionFactor) {
+        this(latitudeE6 / conversionFactor, longitudeE6 / conversionFactor);
+    }
+
     public double bearingTo(GeoPoint other) {
         double deltaLon = Math.toRadians(other.getLongitude() - getLongitude());
 

@@ -33,6 +33,12 @@ final class OptionalFields {
     private static final int HEADER_BITMASK_CREATED_BY = 0x04;
 
     /**
+     * Bitmask for the encoding standard set to E7 instead of E6.
+     * This adds precision for mapfiles used in indoor navigation
+     */
+    private static final int HEADER_BITMASK_IS_E7_ENCODING = 0x01;
+
+    /**
      * Bitmask for the debug flag in the file header.
      */
     private static final int HEADER_BITMASK_DEBUG = 0x80;
@@ -76,6 +82,7 @@ final class OptionalFields {
     final boolean hasLanguagesPreference;
     final boolean hasStartPosition;
     final boolean hasStartZoomLevel;
+    final boolean isE7Encoding;
     final boolean isDebugFile;
     String languagesPreference;
     GeoPoint startPosition;
@@ -88,6 +95,7 @@ final class OptionalFields {
         this.hasLanguagesPreference = (flags & HEADER_BITMASK_LANGUAGES_PREFERENCE) != 0;
         this.hasComment = (flags & HEADER_BITMASK_COMMENT) != 0;
         this.hasCreatedBy = (flags & HEADER_BITMASK_CREATED_BY) != 0;
+        this.isE7Encoding = (flags & HEADER_BITMASK_IS_E7_ENCODING) != 0;
     }
 
     private OpenResult readLanguagesPreference(ReadBuffer readBuffer) {
@@ -97,23 +105,23 @@ final class OptionalFields {
         return OpenResult.SUCCESS;
     }
 
-    private OpenResult readMapStartPosition(ReadBuffer readBuffer) {
+    private OpenResult readMapStartPosition(ReadBuffer readBuffer, double conversionFactor) {
         if (this.hasStartPosition) {
             // get and check the start position latitude (4 byte)
             int mapStartLatitude = readBuffer.readInt();
-            if (mapStartLatitude < RequiredFields.LATITUDE_MIN
-                    || mapStartLatitude > RequiredFields.LATITUDE_MAX) {
+            if (mapStartLatitude < RequiredFields.LATITUDE_MIN * conversionFactor
+                    || mapStartLatitude > RequiredFields.LATITUDE_MAX * conversionFactor) {
                 return new OpenResult("invalid map start latitude: " + mapStartLatitude);
             }
 
             // get and check the start position longitude (4 byte)
             int mapStartLongitude = readBuffer.readInt();
-            if (mapStartLongitude < RequiredFields.LONGITUDE_MIN
-                    || mapStartLongitude > RequiredFields.LONGITUDE_MAX) {
+            if (mapStartLongitude < RequiredFields.LONGITUDE_MIN * conversionFactor
+                    || mapStartLongitude > RequiredFields.LONGITUDE_MAX * conversionFactor) {
                 return new OpenResult("invalid map start longitude: " + mapStartLongitude);
             }
 
-            this.startPosition = new GeoPoint(mapStartLatitude, mapStartLongitude);
+            this.startPosition = new GeoPoint(mapStartLatitude, mapStartLongitude, conversionFactor);
         }
         return OpenResult.SUCCESS;
     }
@@ -132,7 +140,7 @@ final class OptionalFields {
     }
 
     private OpenResult readOptionalFields(ReadBuffer readBuffer) {
-        OpenResult openResult = readMapStartPosition(readBuffer);
+        OpenResult openResult = readMapStartPosition(readBuffer, this.isE7Encoding ? 1E7 : 1E6);
         if (!openResult.isSuccess()) {
             return openResult;
         }

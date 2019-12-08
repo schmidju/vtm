@@ -28,11 +28,6 @@ public class SubFileParameter {
     public static final byte BYTES_PER_INDEX_ENTRY = 5;
 
     /**
-     * Divisor for converting coordinates stored as integers to double values.
-     */
-    private static final double COORDINATES_DIVISOR = 1000000d;
-
-    /**
      * Base zoom level of the sub-file, which equals to one block.
      */
     public final byte baseZoomLevel;
@@ -112,7 +107,7 @@ public class SubFileParameter {
      */
     private final int hashCodeValue;
 
-    SubFileParameter(SubFileParameterBuilder subFileParameterBuilder) {
+    SubFileParameter(SubFileParameterBuilder subFileParameterBuilder, double conversionRate) {
         this.startAddress = subFileParameterBuilder.startAddress;
         this.indexStartAddress = subFileParameterBuilder.indexStartAddress;
         this.subFileSize = subFileParameterBuilder.subFileSize;
@@ -124,19 +119,19 @@ public class SubFileParameter {
         // calculate the XY numbers of the boundary tiles in this sub-file
         this.boundaryTileBottom = Projection.latitudeToTileY(
                 subFileParameterBuilder.boundingBox.minLatitudeE6
-                        / COORDINATES_DIVISOR,
+                        / conversionRate,
                 this.baseZoomLevel);
         this.boundaryTileLeft = Projection.longitudeToTileX(
                 subFileParameterBuilder.boundingBox.minLongitudeE6
-                        / COORDINATES_DIVISOR,
+                        / conversionRate,
                 this.baseZoomLevel);
         this.boundaryTileTop = Projection.latitudeToTileY(
                 subFileParameterBuilder.boundingBox.maxLatitudeE6
-                        / COORDINATES_DIVISOR,
+                        / conversionRate,
                 this.baseZoomLevel);
         this.boundaryTileRight = Projection.longitudeToTileX(
                 subFileParameterBuilder.boundingBox.maxLongitudeE6
-                        / COORDINATES_DIVISOR,
+                        / conversionRate,
                 this.baseZoomLevel);
 
         // calculate the horizontal and vertical amount of blocks in this sub-file

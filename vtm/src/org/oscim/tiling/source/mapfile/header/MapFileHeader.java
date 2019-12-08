@@ -135,6 +135,12 @@ public class MapFileHeader {
             return openResult;
         }
 
+        openResult = RequiredFields.validateBoundingBox(mapFileInfoBuilder,
+                mapFileInfoBuilder.optionalFields.isE7Encoding ? 1E7 : 1E6);
+        if (!openResult.isSuccess()) {
+            return openResult;
+        }
+
         openResult = RequiredFields.readPoiTags(readBuffer, mapFileInfoBuilder);
         if (!openResult.isSuccess()) {
             return openResult;
@@ -223,7 +229,8 @@ public class MapFileHeader {
             subFileParameterBuilder.boundingBox = mapFileInfoBuilder.boundingBox;
 
             // add the current sub-file to the list of sub-files
-            tempSubFileParameters[currentSubFile] = subFileParameterBuilder.build();
+            tempSubFileParameters[currentSubFile] = subFileParameterBuilder.build(
+                    mapFileInfoBuilder.optionalFields.isE7Encoding ? 1E7 : 1E6);
 
             updateZoomLevelInformation(tempSubFileParameters[currentSubFile]);
         }

@@ -27,7 +27,7 @@ class SubFileParameterBuilder {
     byte zoomLevelMax;
     byte zoomLevelMin;
 
-    SubFileParameter build() {
-        return new SubFileParameter(this);
+    SubFileParameter build(double conversionRate) {
+        return new SubFileParameter(this, conversionRate);
     }
 }

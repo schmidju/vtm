@@ -29,7 +29,7 @@ public class BoundingBox {
     /**
      * Conversion factor from degrees to microdegrees.
      */
-    private static final double CONVERSION_FACTOR = 1000000d;
+    private final double CONVERSION_FACTOR;
 
     /**
      * The maximum latitude value of this BoundingBox in microdegrees (degrees *
@@ -61,11 +61,22 @@ public class BoundingBox {
      * @param maxLatitudeE6  the maximum latitude in microdegrees (degrees * 10^6).
      * @param maxLongitudeE6 the maximum longitude in microdegrees (degrees * 10^6).
      */
-    public BoundingBox(int minLatitudeE6, int minLongitudeE6, int maxLatitudeE6, int maxLongitudeE6) {
+    public BoundingBox(int minLatitudeE6, int minLongitudeE6, int maxLatitudeE6, int maxLongitudeE6, double conversionFactor) {
+        this.CONVERSION_FACTOR = conversionFactor;
         this.minLatitudeE6 = minLatitudeE6;
         this.minLongitudeE6 = minLongitudeE6;
         this.maxLatitudeE6 = maxLatitudeE6;
         this.maxLongitudeE6 = maxLongitudeE6;
+    }
+
+    /**
+     * @param minLatitudeE6  the minimum latitude in microdegrees (degrees * 10^6).
+     * @param minLongitudeE6 the minimum longitude in microdegrees (degrees * 10^6).
+     * @param maxLatitudeE6  the maximum latitude in microdegrees (degrees * 10^6).
+     * @param maxLongitudeE6 the maximum longitude in microdegrees (degrees * 10^6).
+     */
+    public BoundingBox(int minLatitudeE6, int minLongitudeE6, int maxLatitudeE6, int maxLongitudeE6) {
+        this(minLatitudeE6, minLongitudeE6, maxLatitudeE6, maxLongitudeE6, 1E6);
     }
 
     /**
@@ -75,10 +86,11 @@ public class BoundingBox {
      * @param maxLongitude the maximum longitude coordinate in degrees.
      */
     public BoundingBox(double minLatitude, double minLongitude, double maxLatitude, double maxLongitude) {
-        this.minLatitudeE6 = (int) (minLatitude * 1E6);
-        this.minLongitudeE6 = (int) (minLongitude * 1E6);
-        this.maxLatitudeE6 = (int) (maxLatitude * 1E6);
-        this.maxLongitudeE6 = (int) (maxLongitude * 1E6);
+        this.CONVERSION_FACTOR = 1E6;
+        this.minLatitudeE6 = (int) (minLatitude * this.CONVERSION_FACTOR);
+        this.minLongitudeE6 = (int) (minLongitude * this.CONVERSION_FACTOR);
+        this.maxLatitudeE6 = (int) (maxLatitude * this.CONVERSION_FACTOR);
+        this.maxLongitudeE6 = (int) (maxLongitude * this.CONVERSION_FACTOR);
     }
 
     /**
@@ -89,6 +101,7 @@ public class BoundingBox {
         int minLon = Integer.MAX_VALUE;
         int maxLat = Integer.MIN_VALUE;
         int maxLon = Integer.MIN_VALUE;
+        this.CONVERSION_FACTOR = 1E6;
         for (GeoPoint geoPoint : geoPoints) {
             minLat = Math.min(minLat, geoPoint.latitudeE6);
             minLon = Math.min(minLon, geoPoint.longitudeE6);
@@ -139,10 +152,10 @@ public class BoundingBox {
      * @return a BoundingBox that covers this BoundingBox and the given BoundingBox.
      */
     public BoundingBox extendBoundingBox(BoundingBox boundingBox) {
-        return new BoundingBox(Math.min(this.minLatitudeE6, boundingBox.minLatitudeE6),
-                Math.min(this.minLongitudeE6, boundingBox.minLongitudeE6),
-                Math.max(this.maxLatitudeE6, boundingBox.maxLatitudeE6),
-                Math.max(this.maxLongitudeE6, boundingBox.maxLongitudeE6));
+        return new BoundingBox(Math.min(this.minLatitudeE6 / this.CONVERSION_FACTOR, boundingBox.minLatitudeE6 / boundingBox.CONVERSION_FACTOR),
+                Math.min(this.minLongitudeE6 / this.CONVERSION_FACTOR, boundingBox.minLongitudeE6 / boundingBox.CONVERSION_FACTOR),
+                Math.max(this.maxLatitudeE6 / this.CONVERSION_FACTOR, boundingBox.maxLatitudeE6 / boundingBox.CONVERSION_FACTOR),
+                Math.max(this.maxLongitudeE6 / this.CONVERSION_FACTOR, boundingBox.maxLongitudeE6 / boundingBox.CONVERSION_FACTOR));
     }
 
     /**
@@ -254,7 +267,7 @@ public class BoundingBox {
         int latitudeOffset = (maxLatitudeE6 - minLatitudeE6) / 2;
         int longitudeOffset = (maxLongitudeE6 - minLongitudeE6) / 2;
         return new GeoPoint(minLatitudeE6 + latitudeOffset, minLongitudeE6
-                + longitudeOffset);
+                + longitudeOffset, CONVERSION_FACTOR);
     }
 
     /**

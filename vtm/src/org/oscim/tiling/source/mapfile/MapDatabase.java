@@ -214,6 +214,7 @@ public class MapDatabase implements ITileDataSource {
     private final MapElement mElem = new MapElement();
 
     private int minDeltaLat, minDeltaLon;
+    private double mCoordScale;
 
     private final TileProjection mTileProjection;
     private final TileClipper mTileClipper;
@@ -260,6 +261,8 @@ public class MapDatabase implements ITileDataSource {
             mIntBuffer = new int[Short.MAX_VALUE * 2];
 
         try {
+            mCoordScale = mTileSource.fileInfo.coordConversionRate;
+            mTileProjection.setCoordScale(mCoordScale);
             mTileProjection.setTile(tile);
             //mTile = tile;
 
@@ -276,9 +279,9 @@ public class MapDatabase implements ITileDataSource {
                 /* translate screen pixel for tile to latitude and longitude
                  * tolerance for point reduction before projection. */
                 minDeltaLat = (int) (Math.abs(MercatorProjection.toLatitude(tile.y + size)
-                        - MercatorProjection.toLatitude(tile.y)) * 1e6) / simplify;
+                        - MercatorProjection.toLatitude(tile.y)) * mCoordScale) / simplify;
                 minDeltaLon = (int) (Math.abs(MercatorProjection.toLongitude(tile.x + size)
-                        - MercatorProjection.toLongitude(tile.x)) * 1e6) / simplify;
+                        - MercatorProjection.toLongitude(tile.x)) * mCoordScale) / simplify;
             } else {
                 minDeltaLat = 0;
                 minDeltaLon = 0;
@@ -593,8 +596,8 @@ public class MapDatabase implements ITileDataSource {
                         Projection.tileXToLongitude(subFileParameter.boundaryTileLeft + column,
                                 subFileParameter.baseZoomLevel);
 
-                mTileLatitude = (int) (tileLatitudeDeg * 1E6);
-                mTileLongitude = (int) (tileLongitudeDeg * 1E6);
+                mTileLatitude = (int) (tileLatitudeDeg * mCoordScale);
+                mTileLongitude = (int) (tileLongitudeDeg * mCoordScale);
 
                 processBlock(queryParams, subFileParameter, mapDataSink, boundingBox, selector, mapReadResult);
             }
@@ -697,7 +700,7 @@ public class MapDatabase implements ITileDataSource {
                 List<Tag> tags = new ArrayList<>();
                 for (int i = 0; i < e.tags.size(); i++)
                     tags.add(e.tags.get(i));
-                GeoPoint position = new GeoPoint(latitude, longitude);
+                GeoPoint position = new GeoPoint(latitude, longitude, mCoordScale);
                 // depending on the zoom level configuration the poi can lie outside
                 // the tile requested, we filter them out here
                 if (!filterRequired || boundingBox.contains(position)) {
@@ -779,7 +782,9 @@ public class MapDatabase implements ITileDataSource {
         }
 
         if (waySegment != null)
-            waySegment[0] = new GeoPoint(rawLat / 1E6, rawLon / 1E6);
+        {
+            waySegment[0] = new GeoPoint(rawLat / mCoordScale, rawLon / mCoordScale);
+        }
 
         int deltaLat = 0;
         int deltaLon = 0;
@@ -796,7 +801,9 @@ public class MapDatabase implements ITileDataSource {
             rawLon += deltaLon;
 
             if (waySegment != null)
-                waySegment[pos / 2] = new GeoPoint(rawLat / 1E6, rawLon / 1E6);
+            {
+                waySegment[pos / 2] = new GeoPoint(rawLat / mCoordScale, rawLon / mCoordScale);
+            }
 
             float lat = mTileProjection.projectLat(rawLat);
             float lon = mTileProjection.projectLon(rawLon);
@@ -1054,7 +1061,7 @@ public class MapDatabase implements ITileDataSource {
                         for (int i = 0; i < e.tags.size(); i++)
                             tags.add(e.tags.get(i));
                         if (Selector.ALL == selector || hasName || hasHouseNr || hasRef || wayAsLabelTagFilter(tags)) {
-                            GeoPoint labelPos = labelPosition != null ? new GeoPoint(labelPosition[1] / 1E6, labelPosition[0] / 1E6) : null;
+                            GeoPoint labelPos = labelPosition != null ? new GeoPoint(labelPosition[1] / mCoordScale, labelPosition[0] / mCoordScale) : null;
                             ways.add(new Way(layer, tags, wayNodesArray, labelPos, e.type));
                         }
                     }
@@ -1124,6 +1131,8 @@ public class MapDatabase implements ITileDataSource {
             mIntBuffer = new int[Short.MAX_VALUE * 2];
 
         try {
+            mCoordScale = mTileSource.fileInfo.coordConversionRate;
+            mTileProjection.setCoordScale(mCoordScale);
             mTileProjection.setTile(upperLeft);
 
             QueryParameters queryParameters = new QueryParameters();
@@ -1251,7 +1260,7 @@ public class MapDatabase implements ITileDataSource {
     }
 
     static class TileProjection {
-        private static final double COORD_SCALE = 1000000.0;
+        private double COORD_SCALE = 1000000.0;
 
         long dx, dy;
         double divx, divy;
@@ -1268,11 +1277,16 @@ public class MapDatabase implements ITileDataSource {
             dx = (x - (mapExtents >> 1));
             dy = (y - (mapExtents >> 1));
 
-            /* scales longitude(1e6) to map-pixel */
+            /* scales longitude(1e6 or 1e7) to map-pixel */
             divx = (180.0 * COORD_SCALE) / (mapExtents >> 1);
 
             /* scale latitude to map-pixel */
             divy = (Math.PI * 2.0) / (mapExtents >> 1);
+        }
+
+        void setCoordScale(double coordScale)
+        {
+            COORD_SCALE = coordScale;
         }
 
         public void projectPoint(int lat, int lon, MapElement out) {

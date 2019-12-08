@@ -63,45 +63,61 @@ final class RequiredFields {
     /**
      * The maximum latitude values in microdegrees.
      */
-    static final int LATITUDE_MAX = 90000000;
+    static final int LATITUDE_MAX = 90;
 
     /**
      * The minimum latitude values in microdegrees.
      */
-    static final int LATITUDE_MIN = -90000000;
+    static final int LATITUDE_MIN = -90;
 
     /**
      * The maximum longitude values in microdegrees.
      */
-    static final int LONGITUDE_MAX = 180000000;
+    static final int LONGITUDE_MAX = 180;
 
     /**
      * The minimum longitude values in microdegrees.
      */
-    static final int LONGITUDE_MIN = -180000000;
+    static final int LONGITUDE_MIN = -180;
 
     static OpenResult readBoundingBox(ReadBuffer readBuffer, MapFileInfoBuilder mapFileInfoBuilder) {
-        // get and check the minimum latitude (4 bytes)
+        // get the minimum latitude (4 bytes)
         int minLatitude = readBuffer.readInt();
-        if (minLatitude < LATITUDE_MIN || minLatitude > LATITUDE_MAX) {
+        // get the minimum longitude (4 bytes)
+        int minLongitude = readBuffer.readInt();
+        // get the maximum latitude (4 bytes)
+        int maxLatitude = readBuffer.readInt();
+        // get the maximum longitude (4 bytes)
+        int maxLongitude = readBuffer.readInt();
+
+        mapFileInfoBuilder.boundingBox = new BoundingBox(minLatitude, minLongitude, maxLatitude,
+                maxLongitude);
+        return OpenResult.SUCCESS;
+    }
+
+    static OpenResult validateBoundingBox(MapFileInfoBuilder mapFileInfoBuilder, double conversionRate)
+    {
+        // get and check the minimum latitude (4 bytes)
+        int minLatitude = mapFileInfoBuilder.boundingBox.minLatitudeE6;
+        if (minLatitude < LATITUDE_MIN * conversionRate || minLatitude > LATITUDE_MAX * conversionRate) {
             return new OpenResult("invalid minimum latitude: " + minLatitude);
         }
 
         // get and check the minimum longitude (4 bytes)
-        int minLongitude = readBuffer.readInt();
-        if (minLongitude < LONGITUDE_MIN || minLongitude > LONGITUDE_MAX) {
+        int minLongitude = mapFileInfoBuilder.boundingBox.minLongitudeE6;
+        if (minLongitude < LONGITUDE_MIN * conversionRate || minLongitude > LONGITUDE_MAX * conversionRate) {
             return new OpenResult("invalid minimum longitude: " + minLongitude);
         }
 
         // get and check the maximum latitude (4 bytes)
-        int maxLatitude = readBuffer.readInt();
-        if (maxLatitude < LATITUDE_MIN || maxLatitude > LATITUDE_MAX) {
+        int maxLatitude = mapFileInfoBuilder.boundingBox.maxLatitudeE6;
+        if (maxLatitude < LATITUDE_MIN * conversionRate || maxLatitude > LATITUDE_MAX * conversionRate) {
             return new OpenResult("invalid maximum latitude: " + maxLatitude);
         }
 
         // get and check the maximum longitude (4 bytes)
-        int maxLongitude = readBuffer.readInt();
-        if (maxLongitude < LONGITUDE_MIN || maxLongitude > LONGITUDE_MAX) {
+        int maxLongitude = mapFileInfoBuilder.boundingBox.maxLongitudeE6;
+        if (maxLongitude < LONGITUDE_MIN * conversionRate || maxLongitude > LONGITUDE_MAX * conversionRate) {
             return new OpenResult("invalid maximum longitude: " + maxLongitude);
         }
 
@@ -113,7 +129,7 @@ final class RequiredFields {
         }
 
         mapFileInfoBuilder.boundingBox = new BoundingBox(minLatitude, minLongitude, maxLatitude,
-                maxLongitude);
+                maxLongitude, conversionRate);
         return OpenResult.SUCCESS;
     }
 

@@ -80,6 +80,11 @@ public class MapInfo {
     public final Byte startZoomLevel;
 
     /**
+     * The map encoding conversion rate (1E6 or 1E7)
+     */
+    public final double coordConversionRate;
+
+    /**
      * Zoomlevels provided by this Database, if null then any zoomlevel can be
      * queried.
      */
@@ -100,7 +105,7 @@ public class MapInfo {
      */
     public MapInfo(BoundingBox bbox, Byte zoom, GeoPoint start, String projection,
                    long date, long size, int version, String language, String comment,
-                   String createdBy, int[] zoomLevel) {
+                   String createdBy, int[] zoomLevel, boolean e7_encoding) {
 
         this.startZoomLevel = zoom;
         this.zoomLevel = zoomLevel;
@@ -115,6 +120,7 @@ public class MapInfo {
 
         this.comment = comment;
         this.createdBy = createdBy;
+        this.coordConversionRate = e7_encoding ? 1E7 : 1E6;
 
     }
 }

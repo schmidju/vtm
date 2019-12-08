@@ -60,7 +60,8 @@ public class MapFileInfo extends org.oscim.tiling.source.mapfile.MapInfo {
                 mapFileInfoBuilder.optionalFields.languagesPreference,
                 mapFileInfoBuilder.optionalFields.comment,
                 mapFileInfoBuilder.optionalFields.createdBy,
-                mapFileInfoBuilder.zoomLevel);
+                mapFileInfoBuilder.zoomLevel,
+                mapFileInfoBuilder.optionalFields.isE7Encoding);
 
         debugFile = mapFileInfoBuilder.optionalFields.isDebugFile;
 

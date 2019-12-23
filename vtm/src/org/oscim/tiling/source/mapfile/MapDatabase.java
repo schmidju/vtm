@@ -1049,7 +1049,7 @@ public class MapDatabase implements ITileDataSource {
                     if (!mTileSeparator.separate(e))
                         continue;
                 }
-                e.simplify(1, true);
+                //e.simplify(1, true);
 
                 e.setLayer(layer);
 

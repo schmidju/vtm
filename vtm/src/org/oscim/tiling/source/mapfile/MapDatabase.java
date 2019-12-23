@@ -809,7 +809,7 @@ public class MapDatabase implements ITileDataSource {
             float lon = mTileProjection.projectLon(rawLon);
 
             if (pos == length - 2) {
-                boolean line = isLine || (lon != firstLon || lat != firstLat);
+                boolean line = (lon != firstLon || lat != firstLat);
 
                 if (line) {
                     outBuffer[outPos++] = lon;
